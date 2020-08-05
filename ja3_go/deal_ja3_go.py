@@ -3,6 +3,7 @@ import numpy as np
 import glob,os
 path=r'./'
 
+debug=False
 #file=glob.glob(os.path.join(path, "*.csv"))
 #print(file)
 ip_ja3_white=pd.read_csv(path+'legal_ja3.csv',sep=',',index_col=None,usecols=['ja3_digest'])#'destination_ip','ja3_digest'])
@@ -21,10 +22,14 @@ print("黑白名单digest交集个数：",len(ja3_black_white_jiaoji))
 ja3_white_minus_jiaoji=ip_ja3_white.drop_duplicates().append(ja3_black_white_jiaoji).append(ja3_black_white_jiaoji)
 ja3_white_minus_jiaoji=ja3_white_minus_jiaoji.drop_duplicates(keep=False)
 print('白名单中去掉交集后还剩%d个digest' % (len(ja3_white_minus_jiaoji)))
+if debug:
+    ja3_white_minus_jiaoji.to_csv('debug_white_export.csv',index=False,header=True)
 ##black里去掉交集
 ja3_black_minus_jiaoji=ip_ja3_black.drop_duplicates().append(ja3_black_white_jiaoji).append(ja3_black_white_jiaoji)
 ja3_black_minus_jiaoji=ja3_black_minus_jiaoji.drop_duplicates(keep=False)
 print('黑名单中去掉交集后还剩%d个digest' % (len(ja3_black_minus_jiaoji)))
+if debug:
+   ja3_black_minus_jiaoji.to_csv('debug_black_export.csv',index=False,header=True)
 #print(ja3s_white_minus_jiaoji)
 #添加ssbl黑样本库
 sslbl=True
@@ -60,17 +65,19 @@ if output_result:
     result.to_csv('ja3_result.csv',index=False,header=True,columns=['source_ip','res'])
     print('ja3_result.txt共%d行'%len(result))
 
-#是否提取出黑白名单中去掉交集后的原始清单
+#是否提取出黑白名单中去掉交集后的清单
+
 export=True
 if export :
-    full_ja3_white=pd.read_csv(path+'legal_ja3.csv',sep=',',index_col=None)
+    full_ja3_white=pd.read_csv(path+'legal_ja3.csv',sep=',',index_col=None,usecols=['source_ip','ja3_digest'])
     #print(full_ja3_white)
-    ip_ja3_white_export=pd.merge(full_ja3_white,ja3_white['ja3_digest'],how='inner').drop_duplicates()
+    ip_ja3_white_export=pd.merge(full_ja3_white,ja3_white['ja3_digest'],how='inner').drop_duplicates(subset=['ja3_digest','source_ip'])
     ip_ja3_white_export.to_csv('legal_ja3_white_export.csv',index=False,header=True,columns=['ja3_digest','source_ip'])
-    print('从白名单中匹配出%d条样本'% len(ip_ja3_white_export))
-
+    print('从白名单中匹配出%d条'% len(ip_ja3_white_export))
+    #print(ip_ja3_white_export)
     #print(ja3_white['ja3_digest'])
     full_ja3_black=pd.read_csv(path+'malware_ja3_go.csv',sep=',',index_col=None)
-    ip_ja3_black_export=pd.merge(full_ja3_black,ja3_black['ja3_digest'],how='inner').drop_duplicates()
+    ip_ja3_black_export=pd.merge(full_ja3_black,ja3_black['ja3_digest'],how='inner').drop_duplicates(subset=['ja3_digest','source_ip'])
     ip_ja3_black_export.to_csv('malware_ja3_go_black_export.csv',index=False,header=True,columns=['ja3_digest','source_ip'])
-    print('从黑名单中匹配出%d条样本'% len(ip_ja3_black_export))
+    print('从黑名单中匹配出%d条'% len(ip_ja3_black_export))
+
